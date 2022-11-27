@@ -1,4 +1,4 @@
-# Project_OOP
+# WnV_the_game
 
 Μέλος Α:
 
