@@ -1,11 +1,27 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <ctime>
+#include <raylib.h>
 
 using namespace std;
 
+// #define KEY_UP 72
+// #define KEY_DOWN 80
+// #define KEY_LEFT 75
+// #define KEY_RIGHT 77
 
-
+// Πληροφορίες για το ποια πλήκτρα είναι πατημένα
+struct key_state {
+	bool up;						// true αν το αντίστοιχο πλήκτρο είναι πατημένο
+	bool down;
+	bool left;
+	bool right;
+	bool space;
+	bool enter;
+	bool n;
+	bool p;
+};
 // 2D Point in Euclidean space
 class Point {
 
@@ -18,8 +34,8 @@ class Point {
         ~Point(){}
 
         void set_x(int a){ x = a; }
-        int get_x() const { return x;}
         void set_y(int b) { y = b;}
+        int get_x() const { return x;}
         int get_y() const { return y;}
         void print_pos() const { cout << x << "," << y ; }
 
@@ -29,15 +45,9 @@ class Point {
 // Three kinds of Objects: Potion, Water and Tress
 class Object {
 
-    const Point pos;
+    Point pos;
 
     public:
-
-        // Object(){
-        //     Point A;
-        //     A.set_x(0);
-        //     A.set_y(0);
-        // }
 
         Object(Point& p): pos(p) {}
         ~Object(){}
@@ -45,24 +55,11 @@ class Object {
 
 };
 
-class Potion: public Object {
-
-    const Point pos;
-
-    // Potion(){
-    //     Point A;
-    //         A.set_x(0);
-    //         A.set_y(0);
-    // };
-    Potion(Point& p): Object(p), pos(p) {}
-    ~Potion(){};
-
-};
 
 class Obstacle: public Object {
 
     const Point pos;
-    const char type;    // Obstacles are either water or trees
+    const char type;    // Obstacles are either water, trees or potion
 
     public:
 
@@ -75,17 +72,13 @@ class Obstacle: public Object {
 // Hyperclass for classes Player and NPC and subclass from Object
 class Entity: public Object{
 
-    const Point pos;
+    Point pos;
 
     public:
 
-        // Entity(){
-        //     Object obj;
-        // }
         Entity(Point& p) : Object(p), pos(p) {}
         ~Entity(){}
         virtual void move(); // Des ta
-        void place_on_map();
 
 };
 
@@ -101,36 +94,104 @@ class Player: public Entity{
         Player(Point& p, char t = 'N', int num = 1) : Entity(p), pos(p), team(t), potions(num) {}
         ~Player(){}
 
-        void move();
-        void place_on_map();   //??? 
         void set_potions(int num) {potions = num;}
         int get_potions() const {return potions;}
+        void move();
         void heal() const;
 
 };
 
-class NPC: public Entity{
+
+
+void Player::move(){
+
+
+    
+
+}
+
+// class NPC: public Entity{
+
+//     Point pos;
+//     const char type;    // Either 'W' or 'V'
+//     int potions;     
+//     int health;
+//     int offence;
+//     int defence;
+
+//     public:
+
+//         // Default value for type 'N' = None
+//         NPC(Point& p, char t = 'N', int h = 5): Entity(p), type(t), health(h)  {
+
+//                 // pos = p; xreiazeta
+//                 potions = rand()% 2 + 1;
+//                 offence = rand()% 3 + 1;
+//                 defence =  rand()% 2 + 1;
+//             }
+//         ~NPC(){}
+
+//         int get_potions() const {return potions;}
+//         int get_health() const {return health;}
+//         int get_offence() const {return offence;}
+//         int get_defence() const {return defence;}
+//         void move();
+//         void attack();
+
+
+// };
+
+class Werewolve: public Entity{
 
     Point pos;
-    const char type;    // Either 'W' or 'V'
+    const char type;
     int potions;     
     int health;
     int offence;
     int defence;
 
     public:
+        Werewolve(Point& p, int h = 5, char t = 'W', int pot = (rand()% 3), int o = (rand()% 3 + 1), int d = (rand()% 2 + 1)):
+                Entity(p), type(t), health(h), potions(pot), offence(o), defence(d) {}
+        ~Werewolve(){}
 
-        // Default value for type 'N' = None
-        NPC(Point& p, char t = 'N', int num = rand()% 2, int h = rand()% 3,  int o = rand()% 3 + 1,  int d = rand()% 2):
-            Entity(p), pos(p), type(t), potions(num), health(h), offence(o), defence(d) {}
-        ~NPC(){}
-
-        void move();
-        void place_on_map();   //??? 
         int get_potions() const {return potions;}
         int get_health() const {return health;}
         int get_offence() const {return offence;}
         int get_defence() const {return defence;}
+        void move();
+        void attack();
+
+
+};
+
+void Werewolve::move(){
+
+
+    
+
+}
+
+
+class Vampire: public Entity{
+
+    Point pos;
+    const char type;
+    int potions;     
+    int health;
+    int offence;
+    int defence;
+
+    public:
+        Vampire(Point& p, int h = 5, char t = 'V', int pot = (rand()% 3), int o = (rand()% 3 + 1), int d = (rand()% 2 + 1)):
+                Entity(p), type(t), health(h), potions(pot), offence(o), defence(d) {}
+        ~Vampire(){}
+
+        int get_potions() const {return potions;}
+        int get_health() const {return health;}
+        int get_offence() const {return offence;}
+        int get_defence() const {return defence;}
+        void move();
         void attack();
 
 
@@ -139,10 +200,9 @@ class NPC: public Entity{
 
 
 
-
-
-
 int main(){
+
+    srand(time(NULL));
 
     Point A;
     A.set_x(2);
