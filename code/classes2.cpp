@@ -2,10 +2,7 @@
 #include <vector>
 #include <stdlib.h>
 #include <ctime>
-#include <chrono>
-#include <thread>
- 
-
+//#include "classes1.h"
 
 using namespace std;
 
@@ -38,10 +35,12 @@ public:
 class  Map {
     const int height;
     const int width;
+   // Potion pot;
     vector<Obstacle> obstacles;
+   // vector<Entity*> npcs;
     bool day_night_cycle;
     int clock;
-    //vector<NPC> vamp_n_ww;            
+         
 
      
 public:
@@ -63,20 +62,16 @@ Map:: Map(int h = 30, int w = 60) : height(h), width(w)
     clock = 0;
 
     int obst_num = (height + width);
-   // int team_members_count = height * width / 20;
-    
+    int team_members_count = height * width / 20;
     
     Point pos;
     char type;
+//Adding obstacles to the map    
     for(int i = 0; i < obst_num; i++)
     {
-        //j is a modifier so the random number generator changes seed every time it checks the vector for the same cordinates
-        int j = 1000;
         do{
-            srand(time(NULL) * j);
-            pos.set_x(rand() % height);
-            pos.set_y(rand() % width);
-            j += 1000;
+            pos.set_x(rand() % width);
+            pos.set_y(rand() % height);
         }
         while (!(is_free(pos))); 
 
@@ -88,6 +83,37 @@ Map:: Map(int h = 30, int w = 60) : height(h), width(w)
         obstacles.push_back(Obstacle(pos,type));
             
     }
+// //Adding vampires to the map    
+//     for(int i = 0; i < team_members_count;i++)
+//     {
+//         do{
+//             pos.set_x(rand() % height);
+//             pos.set_y(rand() % width);
+//         }
+//         while(!(is_free(pos)));
+//         Vampire vamp(pos);
+//         npcs.push_back(&vamp);
+//     }
+// //Adding werewolves to the map
+//     for(int i = 0; i < team_members_count;i++)
+//     {
+//         do{
+//             pos.set_x(rand() % height);
+//             pos.set_y(rand() % width);
+//         }
+//         while(!(is_free(pos)));
+//         Werewolf were(pos);
+//         npcs.push_back(&were);
+
+//     }
+// //Adding healing potion to the map
+
+//     do{
+//         pos.set_x(rand() % height);
+//         pos.set_y(rand() % width);
+//     }
+//     while(!(is_free(pos))); 
+
 } 
 
 bool Map::is_free(Point pos)
@@ -98,6 +124,14 @@ bool Map::is_free(Point pos)
         if(i->get_pos().get_x() == pos.get_x() && (i->get_pos().get_y() == pos.get_y()))
             return false;
     }    
+    // for(auto j = npcs.begin(); j < npcs.end(); j++)
+    // {
+    //     Entity* ptr = *j;
+    //     if((ptr->get_pos().get_x() == pos.get_x()) && (ptr->get_pos().get_y() == pos.get_y()))
+    //     {
+    //         return false;
+    //     }
+    // }
     return true;
 }
 
@@ -113,7 +147,6 @@ Obstacle* Map::find_obstacle(Point pos) {
         j++;
     }
     return NULL;
-
 }
 
  void Map::print_map() {
@@ -127,9 +160,9 @@ Obstacle* Map::find_obstacle(Point pos) {
         
         for(int j = 0; j < width; j++ )
          {
-           if(find_obstacle(Point(i,j)) == NULL)
+           if(find_obstacle(Point(j,i)) == NULL)
                  cout << "\033[42;32m \033[0m";
-             else if(find_obstacle(Point(i,j))->get_type() == 'W')
+             else if(find_obstacle(Point(j,i))->get_type() == 'W')
                 cout << "\033[44;32m \033[0m";   
              else
                  cout << "\033[42;33m♣\033[0m";
@@ -137,7 +170,6 @@ Obstacle* Map::find_obstacle(Point pos) {
          }
          cout << endl;
      }
-
  }
 
 
