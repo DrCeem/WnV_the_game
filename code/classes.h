@@ -81,7 +81,7 @@ class Entity {
 
 	protected: 
 		Point pos;
-		const char type;	// Either 'P' for Player, 'W' for Werewolf or 'V' for Vampire
+		 char type;	// Either 'P' for Player, 'W' for Werewolf or 'V' for Vampire
 
 	public:
 
@@ -89,8 +89,8 @@ class Entity {
 		~Entity();
 		Point get_pos() const;
 		char get_type() const;
-		void move();
-		void heal();
+		// void move() ;
+		// void heal() ;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -127,6 +127,8 @@ class Map {
 	Player avatar;
 
     friend class Player;
+	friend class Vampire;
+	friend class Werewolf;
 	
 	public:
 
@@ -140,6 +142,8 @@ class Map {
         void update_and_draw(Map& map);
 		Object* find_object(Point& pos);
 		Entity* find_entity(Point& pos);
+		Vampire* find_Vampire(Point& pos);
+		Werewolf* find_Werewolf(Point& pos);
 		
 };
 
@@ -158,6 +162,7 @@ class Vampire : public Entity {
 
 		Vampire(Point& p, char tp);
 		~Vampire();
+		char get_type() const;
 		int get_health() const;
 		int get_attack() const;
 		int get_defence() const;
@@ -165,8 +170,8 @@ class Vampire : public Entity {
 		void set_health(int h);
 		void set_potions(int p);
 		void move(Map& map);
-		void heal();
-		void attack_enemy();
+		void heal(Map& map);
+		void attack_enemy(Map& map);
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -183,6 +188,7 @@ class Werewolf : public Entity {
 
 		Werewolf(Point& p,char tp);
 		~Werewolf();
+		char get_type() const;
 		int get_health() const;
 		int get_attack() const;
 		int get_defence() const;
@@ -190,7 +196,7 @@ class Werewolf : public Entity {
 		void set_health(int h);
 		void set_potions(int p);
 		void move(Map& map) ;
-		void heal();
-		void attack_enemy();
+		void heal(Map& map);
+		void attack_enemy(Map& map);
 };
 

@@ -169,6 +169,8 @@ Vampire::Vampire(Point& p, char tp ) : Entity(p,tp) {
 
 Vampire::~Vampire() {};
 
+char Vampire::get_type() const {return type;}
+
 int Vampire::get_health() const {return health;}
 
 int Vampire::get_attack() const {return attack;}
@@ -187,7 +189,7 @@ void Vampire:: set_potions(int pot) { potions = pot;}
 // The function examines which of said positions are available, chooses one of them randomly, and moves the vampire to the new position
 void Vampire::move(Map& map) {
 
-	Point position = get_pos();
+	Point position = pos;
 
 	// All the positions where it's possible for the vampire to move
     Point all_positions[9];
@@ -246,15 +248,99 @@ void Vampire::move(Map& map) {
     pos.set_point(available_positions[(rand()%size)]) ;
 }
 
-void Vampire::heal()
-{
-	//To do
+void Vampire::heal(Map& map) {
+
+	Point position = pos;
+
+	// All 4 positions next to the Vampire
+    Point nearby_positions[4];
+ 
+    // Right
+    position.set_x(position.get_x()+1);
+    nearby_positions[0] = position;
+
+    // Left
+    position.set_x(position.get_x()-2);
+    nearby_positions[1] = position;
+    
+    // Original Position
+    position.set_x(position.get_x()+1);
+
+    // Up
+    position.set_y(position.get_y()+1);
+    nearby_positions[2] = position;
+    
+    // Down
+    position.set_y(position.get_y()-2);
+    nearby_positions[3] = position;
+
+	for (int i = 0; i < 4; i++) {
+		
+		Vampire* vamp = map.find_Vampire(nearby_positions[i]);
+
+
+		if ((vamp !=NULL) && (potions > 0 )) {
+
+			if(rand()%2){
+				vamp->set_health( vamp->get_health() + 1 );
+				potions --;
+			}
+
+			return;
+		}	
+    }
 }
 
-void Vampire::attack_enemy()
+
+void Vampire::attack_enemy(Map& map)
 {
-	//To do
-}
+	    
+	Point position = pos;
+
+	// All 4 positions next to the Vampire
+    Point nearby_positions[4];
+ 
+    // Right
+    position.set_x(position.get_x()+1);
+    nearby_positions[0] = position;
+
+    // Left
+    position.set_x(position.get_x()-2);
+    nearby_positions[1] = position;
+    
+    // Original Position
+    position.set_x(position.get_x()+1);
+
+    // Up
+    position.set_y(position.get_y()+1);
+    nearby_positions[2] = position;
+    
+    // Down
+    position.set_y(position.get_y()-2);
+    nearby_positions[3] = position;
+	
+	for (int i = 0; i < 4; i++) {
+			
+		Werewolf* w = map.find_Werewolf(nearby_positions[i]);
+
+		if ( ( attack >= w->get_attack() ) && ( attack > w->get_defence() ) ){
+			int damage = abs(attack - w->get_defence());
+			w->set_health(get_health() - damage);
+
+			// If victim's health gets to zero or below we delete the werewolf from the vector, and call the destructor
+			if (w->get_health() <= 0){
+				for ( int j = 0; j < map.werewolves.size(); j ++ ){
+					if (map.werewolves.at(j).get_pos() == w->get_pos() ){
+						map.werewolves.erase(map.werewolves.begin() + j);
+						// kaloume to destrutor t w
+					}
+				}
+			}
+			return;
+		}
+	}
+
+}	
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -268,6 +354,8 @@ Werewolf::Werewolf(Point& p, char tp ) : Entity(p,tp) {
 }
 
 Werewolf::~Werewolf() {}
+
+char Werewolf::get_type() const{return type;}
 
 int Werewolf::get_health() const {return health;}
 
@@ -286,7 +374,7 @@ void Werewolf:: set_potions(int pot) { potions = pot;}
 // The function examines which of said positions are available, chooses one of them randomly, and moves the werewolf to the new position
 void Werewolf::move(Map& map) {
 
-	Point position = get_pos();
+	Point position = pos;
 
 	// All the positions where it's possible for the vampire to move
     Point all_positions[5];
@@ -333,15 +421,101 @@ void Werewolf::move(Map& map) {
     pos.set_point(available_positions[(rand()%size)]) ;
 }
 
-void Werewolf::heal()
-{
-	//To do
+void Werewolf::heal(Map& map) {
+
+	Point position = pos;
+
+	// All 4 positions next to the Vampire
+    Point nearby_positions[4];
+ 
+    // Right
+    position.set_x(position.get_x()+1);
+    nearby_positions[0] = position;
+
+    // Left
+    position.set_x(position.get_x()-2);
+    nearby_positions[1] = position;
+    
+    // Original Position
+    position.set_x(position.get_x()+1);
+
+    // Up
+    position.set_y(position.get_y()+1);
+    nearby_positions[2] = position;
+    
+    // Down
+    position.set_y(position.get_y()-2);
+    nearby_positions[3] = position;
+
+	for (int i = 0; i < 4; i++) {
+		
+		Werewolf* were = map.find_Werewolf(nearby_positions[i]);
+
+
+		if ((were !=NULL) && (potions > 0 )) {
+
+			if(rand()%2){
+				were->set_health( were->get_health() + 1 );
+				potions --;
+			}
+
+			return;
+		}	
+    }
 }
 
-void Werewolf::attack_enemy()
+
+void Werewolf::attack_enemy(Map& map)
 {
-	//To do
-}
+	    
+	Point position = pos;
+
+	// All 4 positions next to the Vampire
+    Point nearby_positions[4];
+ 
+    // Right
+    position.set_x(position.get_x()+1);
+    nearby_positions[0] = position;
+
+    // Left
+    position.set_x(position.get_x()-2);
+    nearby_positions[1] = position;
+    
+    // Original Position
+    position.set_x(position.get_x()+1);
+
+    // Up
+    position.set_y(position.get_y()+1);
+    nearby_positions[2] = position;
+    
+    // Down
+    position.set_y(position.get_y()-2);
+    nearby_positions[3] = position;
+	
+	for (int i = 0; i < 4; i++) {
+			
+		Vampire* vamp = map.find_Vampire(nearby_positions[i]);
+
+		if ( ( attack >= vamp->get_attack() ) && ( attack > vamp->get_defence() ) ){
+			int damage = abs(attack - vamp->get_defence());
+			vamp->set_health(vamp->get_health() - damage);
+
+			// If victim's health gets to zero or below we delete the werewolf from the vector, and call the destructor
+			if (vamp->get_health() <= 0){
+				for ( int j = 0; j < map.vampires.size(); j ++ ){
+					if (map.vampires.at(j).get_pos() == vamp->get_pos() ){
+						map.vampires.erase(map.vampires.begin() + j);
+						// kaloume to destrutor t w
+					}
+				}
+			}
+			return;
+		}
+	}
+
+}	
+
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -360,6 +534,8 @@ Map:: Map(Player& avtr,int h = 15, int w = 60) : avatar(avtr), height(h), width(
 	
 	Point pos;
 	char type;
+
+
 
 	// Adding obstacles to the map    
 	for ( int i = 0; i < obst_num; i++ ) {
@@ -408,11 +584,12 @@ Map:: Map(Player& avtr,int h = 15, int w = 60) : avatar(avtr), height(h), width(
 	}
 
 	// Adding the healing potion to the map
+	type = 'P';
 	do{
 		pos.set_x(rand() % width);
 		pos.set_y(rand() % height);
 	} while ( !(is_free(pos)) ); 
-	type = 'P';
+
 	objects.push_back(Object(pos,type));
 
 }
@@ -426,6 +603,7 @@ int Map::get_width() const { return width; }
 // Returns a pointer to the entity that is in position pos
 // If it doesn't exist it returns NULL
 Entity* Map :: find_entity(Point& pos) {
+
 	if(pos == avatar.get_pos())
 		return &avatar;
 	for ( int j = 0; j < vampires.size(); j ++ ) {
@@ -437,6 +615,26 @@ Entity* Map :: find_entity(Point& pos) {
 
 		if(pos == werewolves.at(j).get_pos())
 			return &werewolves.at(j);
+	}
+	return NULL;
+}
+
+Werewolf* Map :: find_Werewolf(Point& pos) {
+
+	for ( int j = 0; j < werewolves.size(); j ++ ) {
+
+		if(pos == werewolves.at(j).get_pos())
+			return &werewolves.at(j);
+	}
+	return NULL;
+}
+
+Vampire* Map :: find_Vampire(Point& pos) {
+
+	for ( int j = 0; j < vampires.size(); j ++ ) {
+
+		if(pos == vampires.at(j).get_pos())
+			return &vampires.at(j);
 	}
 	return NULL;
 }
@@ -473,7 +671,7 @@ void Map::print_map() {
 	cout << "\033[2J\033[1;5H";
 
 	if (day_night_cycle)
-        cout<<"DAY ☼\n";
+        cout<<"DAY ☀\n";
     else
         cout<<"NIGHT ☾\n";
 
@@ -492,7 +690,7 @@ void Map::print_map() {
 					cout << "\033[42;31mV\033[0m";
 			}	
 			else if((find_entity(p) != NULL) && (find_entity(p)->get_type() == 'V'))
-			 	cout << "\033[42;30m☼\033[0m";
+			 	cout << "\033[42;30m☀\033[0m";
 			else if((find_entity(p) != NULL) && (find_entity(p)->get_type() == 'W'))
 				cout << "\033[42;37m☾\033[0m";
             else if(find_object(p) == NULL)
@@ -518,20 +716,47 @@ void Map::print_map() {
 
 void Map::update_and_draw(Map& map) {
 
+	if ( werewolves.empty() ){
+		if (avatar.get_team() == 'W')
+			cout << "Team Werewolves was defeted! You lost loseraki:(\n";
+		else
+			cout << "Team Vampire came out Victorious! You won ;) \n";
+		cout << "Game Over! \n";
+		return;
+	}
+	else if ( vampires.empty() ){
+		if (avatar.get_team() == 'V')
+			cout << "Team Vampires was defeted! You lost loseraki:(\n";
+		else
+			cout << "Team Werewolves came out Victorious! You won ;) \n";
+		cout << "Game Over! \n";
+		return; // tsekare 
+	}
+
 	for(int i = 0; i < werewolves.size(); i++) {
 
-		if(werewolves.at(i).get_type() == 'W') {
-				werewolves.at(i).move(map);
-			}
+		werewolves.at(i).move(map);
+			
 	}
 
 	for(int i = 0; i < vampires.size(); i++) {
 
-		if(vampires.at(i).get_type() == 'V') {
-				vampires.at(i).move(map);
-			}
+		vampires.at(i).move(map);
+			
 	}
 
+	// for(int i = 0; i < werewolves.size(); i++) {
+
+	// 	werewolves.at(i).heal_or_attack(map);
+			
+	// }
+
+	for(int i = 0; i < vampires.size(); i++) {
+
+		vampires.at(i).heal(map);
+		vampires.at(i).attack_enemy(map);
+			
+	}
 
 	print_map();
 }
@@ -539,33 +764,33 @@ void Map::update_and_draw(Map& map) {
 // Initializing the game
 int main()
 {
+	// Asks user for Map size
 	int h,w;
 	cout << "Give Map size (height/width)\n";
 	cin >> h >> w;
+
+	// Asks user for their team
 	char team;
 	cout <<"Give Player's team ('W' for werewolves and 'V for vampires\n";
 	cin >> team;
+
+	// Initializing player's position randomly
 	Point p(rand()% w, rand()% h);
 	Player player(p,'P',team);
+
+	// Initializing the game Map
 	Map map(player,h,w);
 	// cout << "\033[2J\033[1;5H";
 
-    map.print_map();
+	
 
-	for (int i = 0; i < 30 ; i ++){
-		std::this_thread::sleep_for(2000ms);
+	for (int i = 0; i < 10 ; i ++){
 		map.update_and_draw(map);
+		std::this_thread::sleep_for(2000ms);
+
 	}
-	// Map map2(player,h,w);
-	// cout << "\033[2J\033[1;5H";
-	// map2.print_map();
 
-    // std::this_thread::sleep_for(2000ms);
-	// cout << "\033[2J\033[1;5H";
-
-	// map.print_map();
-
-	// cout << "check\n";
+	cout << "check\n";
 
 	return 0;
 }
