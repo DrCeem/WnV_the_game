@@ -29,8 +29,9 @@ struct KeyState {
 	bool KEY_DOWN;
 	bool KEY_LEFT;
 	bool KEY_RIGHT;
-	bool KEY_SPACE;
+	bool KEY_H;
 	bool KEY_P;
+	bool paused;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -121,6 +122,7 @@ class Map {
 	const int width;
 	bool day_night_cycle; 	// True if it's daytime, false if it's nighttime
 	int clock;
+	KeyState keys;
 	vector <Object> objects;
 	vector <Vampire> vampires;
 	vector <Werewolf> werewolves;
@@ -139,7 +141,8 @@ class Map {
         // bool get_daynight() const;
 		bool is_free(Point& x);
 		void print_map();
-        void update_and_draw(Map& map);
+		void update_keys(int input);
+        bool update_and_draw(Map& map);
 		Object* find_object(Point& pos);
 		Entity* find_entity(Point& pos);
 		Vampire* find_Vampire(Point& pos);
@@ -152,7 +155,8 @@ class Map {
 // Declaration of Vampire
 
 class Vampire : public Entity {
-
+	
+	static int count;
 	int health;
 	int attack;
 	int defence;
@@ -162,6 +166,8 @@ class Vampire : public Entity {
 
 		Vampire(Point& p, char tp);
 		~Vampire();
+		int get_count() const;	
+		void set_count(int c);	
 		char get_type() const;
 		int get_health() const;
 		int get_attack() const;
@@ -172,6 +178,7 @@ class Vampire : public Entity {
 		void move(Map& map);
 		void heal(Map& map);
 		void attack_enemy(Map& map);
+		void bail(Map& map,Point& z);
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -179,6 +186,8 @@ class Vampire : public Entity {
 //Declaration of Werewolf
 
 class Werewolf : public Entity {
+	
+	static int count;
 	int health;
 	int attack;
 	int defence;
@@ -188,6 +197,8 @@ class Werewolf : public Entity {
 
 		Werewolf(Point& p,char tp);
 		~Werewolf();
+		int get_count() const;
+		void set_count(int c);	
 		char get_type() const;
 		int get_health() const;
 		int get_attack() const;
@@ -198,5 +209,6 @@ class Werewolf : public Entity {
 		void move(Map& map) ;
 		void heal(Map& map);
 		void attack_enemy(Map& map);
+		void bail(Map& map, Point& z);
 };
 

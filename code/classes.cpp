@@ -2,6 +2,7 @@
 #include "classes.h"
 #include <chrono>
 #include <thread>
+#include <cstdio>
 
 using namespace std::chrono_literals;
 
@@ -112,47 +113,60 @@ void Player::heal(Map& map) {
 
 void Player::move(Map& map) {
 	
-	Point position = get_pos();
-    Point all_positions[5];
+	Point new_pos( pos.get_x(),pos.get_y() );
 
-    // All the positions where it's possible for the werewolf to move:
-    // Specifically it can move left,right,up and down as well as stay in the original position 
-    Point available_positions[5];
-    // The original position
-    available_positions[0] = position;
-    int size = 1;
-    
-    // One step to the right
-    position.set_x(position.get_x()+1);
-    all_positions[1] = position;
+	// A or a
+	if (map.keys.KEY_LEFT) {
 
-    // One step to the left
-    position.set_x(position.get_x()-2);
-    all_positions[2] = position;
-    
-    // Original Position
-    position.set_x(position.get_x()+1);
+		new_pos.set_x(pos.get_x() - 1);
 
-    // One step up
-    position.set_x(position.get_y()+1);
-    all_positions[3] = position;
-    
-    // One step down
-    position.set_x(position.get_y()-2);
-    all_positions[4] = position;
+		// If the position left of the current one is empty, player moves there
+		if ( map.is_free(new_pos) )
+			pos.set_point(new_pos);
+		
+	}
+	// D or d
+	else if (map.keys.KEY_RIGHT) {
 
-    for (int i = 1; i < 5; i++){
+		new_pos.set_x(pos.get_x() + 1);
 
-        // Αποθηκεύουμε τις ελέυθερες θέσεις σ' εναν νέο πίνακα
-        if ( map.is_free(all_positions[i]) ){
-            available_positions[size] = all_positions[i];
-            size ++;
+		// If the position right of the current one is empty, player moves there
+		if ( map.is_free(new_pos) )
+			pos.set_point(new_pos);
+		
+	}
+	// W or w
+	else if (map.keys.KEY_UP) {
 
-        }
-    }
+		// new_pos.set_y(pos.get_y() + 1);
+		new_pos.set_y(pos.get_y() - 1);
 
-    // Else we choose randomly out of the free positions
-    pos.set_point(available_positions[(rand()%size)]) ;
+
+		// If the position above the current one is empty, player moves there
+		if ( map.is_free(new_pos) )
+			pos.set_point(new_pos);
+		
+	}
+	// S or s
+	else if (map.keys.KEY_DOWN) {
+		// den kserw gt doyleyei etsi alla 
+		new_pos.set_y(pos.get_y() + 1);
+
+		// If the position below the current one is empty, player moves there
+		if ( map.is_free(new_pos) )
+			pos.set_point(new_pos);
+		
+	}
+
+	// If the new position leads to the potion, the player takes it, increasing the amount of potions he owns by 1
+	// Object* obj = map.find_object(pos);
+	// if (obj->get_type() == 'P'){
+	// 	number_of_healing_spells ++;
+	// 	map.objects.erase(map.objects.begin() + ); +++++
+
+	// }
+	// return;
+	
 	
 }
 
@@ -160,14 +174,21 @@ void Player::move(Map& map) {
 
 //Definition of Vampire
 
+int Vampire::count = 0;
+
 Vampire::Vampire(Point& p, char tp ) : Entity(p,tp) {
 	health =  MAX_HEALTH;
 	attack = rand() % 3 + 1;
 	defence = rand() % 2 +1;
 	potions = rand() % 3;
+	count++;
 }
 
-Vampire::~Vampire() {};
+Vampire::~Vampire() {count--;}
+
+int Vampire::get_count() const{return count;}
+
+void Vampire::set_count(int c) {count = c;} 
 
 char Vampire::get_type() const {return type;}
 
@@ -278,8 +299,9 @@ void Vampire::heal(Map& map) {
 		
 		Vampire* vamp = map.find_Vampire(nearby_positions[i]);
 
-
-		if ((vamp !=NULL) && (potions > 0 )) {
+		// If the vampire has one or more potions and it's ally's health is below MAX_HEALTH, the fist one chooses wheather
+		// or not it will heal the second one (randomly)
+		if ((vamp !=NULL) && (potions > 0 ) && (vamp->get_health() < MAX_HEALTH)) {
 
 			if(rand()%2){
 				vamp->set_health( vamp->get_health() + 1 );
@@ -323,16 +345,21 @@ void Vampire::attack_enemy(Map& map)
 			
 		Werewolf* w = map.find_Werewolf(nearby_positions[i]);
 
-		if ( ( attack >= w->get_attack() ) && ( attack > w->get_defence() ) ){
+		// If there's a werewolf in the nearby position, it's attack is lower or the same as the vampire's, and it's defence
+		// is lower than the vampire's attack, the vampire attacks it and the weewolf attempts to bail
+		if ((w != NULL) && ( attack >= w->get_attack() ) && ( attack > w->get_defence() ) ){
+			
 			int damage = abs(attack - w->get_defence());
 			w->set_health(get_health() - damage);
+
+			//The attacked tries to bail
+			w->bail(map,pos);
 
 			// If victim's health gets to zero or below we delete the werewolf from the vector, and call the destructor
 			if (w->get_health() <= 0){
 				for ( int j = 0; j < map.werewolves.size(); j ++ ){
 					if (map.werewolves.at(j).get_pos() == w->get_pos() ){
 						map.werewolves.erase(map.werewolves.begin() + j);
-						// kaloume to destrutor t w
 					}
 				}
 			}
@@ -342,18 +369,85 @@ void Vampire::attack_enemy(Map& map)
 
 }	
 
+// If the vampire is being attacked and has a lower attack level than it's opponent, this function will be called
+// The vampire will attempt to escape in the opposite direction from which it is being attacked
+// If that direction in anaivalable he will attempt to escape diagonaly in that direction
+// If that also fails his bailing attempts have failed
+void Vampire::bail(Map& map, Point& z)
+{
+	int new_x, new_y;
+
+	// The new x value is the symmetrical value to the entity's x position  (if z.x = 5 and pos.x = 6 ==> new_x = 7)
+	new_x = 2 * pos.get_x() - z.get_x();
+	// The new y value is the symmetrical value to the entity's y position  (if z.y = 5 and pos.y = 6 ==> new_y = 7)
+	new_y  = 2 * pos.get_y() - z.get_y();
+
+	Point posible_new_pos(new_x,new_y);		
+	
+	// If the position is available the vampire moves there
+	if(map.is_free(posible_new_pos)) {
+		pos.set_x(posible_new_pos.get_x());
+		pos.set_y(posible_new_pos.get_y());
+		return;
+	}	
+	
+	// It attempts to move on the x axis
+	if(new_x != 0) {
+
+		posible_new_pos.set_y(pos.get_y() + 1);
+		
+		if (map.is_free(posible_new_pos)) {
+			pos.set_x(posible_new_pos.get_x());
+			pos.set_y(posible_new_pos.get_y());
+			return;
+		}
+		posible_new_pos.set_y(pos.get_y() - 1);
+		
+		if (map.is_free(posible_new_pos)) {
+			pos.set_x(posible_new_pos.get_x());
+			pos.set_y(posible_new_pos.get_y());
+			return;
+		}
+	}
+	// Else it attempts to move on the y axis
+	else if(new_y != 0)	{
+		
+		posible_new_pos.set_x(pos.get_x() + 1);
+		
+		if(map.is_free(posible_new_pos)) {
+			pos.set_x(posible_new_pos.get_x());
+			pos.set_y(posible_new_pos.get_y());
+			return;
+		}
+		posible_new_pos.set_x(pos.get_x() - 1);
+		
+		if(map.is_free(posible_new_pos)) {
+			pos.set_x(posible_new_pos.get_x());
+			pos.set_y(posible_new_pos.get_y());
+			return;
+		}
+	}
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //Definition of Werewolf
+
+int Werewolf::count = 0;
 
 Werewolf::Werewolf(Point& p, char tp ) : Entity(p,tp) {
 	health =  MAX_HEALTH;
 	attack = rand() % 3 + 1;
 	defence = rand() % 2 +1;
 	potions = rand() % 3;
+	count++;
 }
 
-Werewolf::~Werewolf() {}
+Werewolf::~Werewolf() {count--;}
+
+int Werewolf::get_count() const{return count;}
+
+void Werewolf::set_count(int c) {count = c;} 
 
 char Werewolf::get_type() const{return type;}
 
@@ -450,9 +544,10 @@ void Werewolf::heal(Map& map) {
 	for (int i = 0; i < 4; i++) {
 		
 		Werewolf* were = map.find_Werewolf(nearby_positions[i]);
-
-
-		if ((were !=NULL) && (potions > 0 )) {
+		
+		// If the werewolf has one or more potions and it's ally's health is below MAX_HEALTH, the fist one chooses wheather
+		// or not it will heal the second one (randomly)
+		if ((were !=NULL) && (potions > 0 ) && were->get_health() < MAX_HEALTH) {
 
 			if(rand()%2){
 				were->set_health( were->get_health() + 1 );
@@ -467,7 +562,6 @@ void Werewolf::heal(Map& map) {
 
 void Werewolf::attack_enemy(Map& map)
 {
-	    
 	Point position = pos;
 
 	// All 4 positions next to the Vampire
@@ -496,16 +590,22 @@ void Werewolf::attack_enemy(Map& map)
 			
 		Vampire* vamp = map.find_Vampire(nearby_positions[i]);
 
-		if ( ( attack >= vamp->get_attack() ) && ( attack > vamp->get_defence() ) ){
+		// If there's a vampire in the nearby position, it's attack is lower or the same as the werewolf's, and it's defence
+		// is lower than the werewolf's attack, the werewolf attacks it and the vampire attempts to bail
+		if ((vamp != NULL) && ( attack >= vamp->get_attack() ) && ( attack > vamp->get_defence() ) ){
+			
 			int damage = abs(attack - vamp->get_defence());
 			vamp->set_health(vamp->get_health() - damage);
+
+			//The attacked tries to bail
+			// mhpos na prospathei na bailaei prin tis faei
+			vamp->bail(map,pos);
 
 			// If victim's health gets to zero or below we delete the werewolf from the vector, and call the destructor
 			if (vamp->get_health() <= 0){
 				for ( int j = 0; j < map.vampires.size(); j ++ ){
 					if (map.vampires.at(j).get_pos() == vamp->get_pos() ){
 						map.vampires.erase(map.vampires.begin() + j);
-						// kaloume to destrutor t w
 					}
 				}
 			}
@@ -515,6 +615,27 @@ void Werewolf::attack_enemy(Map& map)
 
 }	
 
+// If the werewolf is being attacked and has a lower attack level than it's opponent, this function will be called
+// The werewolf will atempt to escape in the opposite direction from which it is being attacked.
+// If that direction in anaivalable his bailing attempt has failed
+void Werewolf::bail(Map& map, Point& z)
+{
+	int new_x, new_y;
+
+	// The new x value is the symmetrical value to the entity's x position  (if z.x = 5 and pos.x = 6 ==> new_x = 7)
+	new_x = 2 * pos.get_x() - z.get_x();
+	// The new y value is the symmetrical value to the entity's y position  (if z.y = 5 and pos.y = 6 ==> new_y = 7)		
+	new_y  = 2 * pos.get_y() - z.get_y();
+
+	Point posible_new_pos(new_x,new_y);
+	// If the position is available the werewolf moves there
+	if(map.is_free(posible_new_pos)) {
+		pos.set_x(posible_new_pos.get_x());
+		pos.set_y(posible_new_pos.get_y());
+	}	
+
+}
+
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -522,6 +643,17 @@ void Werewolf::attack_enemy(Map& map)
 // Definition of Map
 
 Map:: Map(Player& avtr,int h = 15, int w = 60) : avatar(avtr), height(h), width(w) {   
+
+	// Initializing keys 
+	// theoritika den xeiazetai
+	keys.KEY_DOWN = false;
+	keys.KEY_UP = false;
+	keys.KEY_LEFT = false;
+	keys.KEY_RIGHT = false;
+	keys.KEY_H = false;
+	keys.KEY_P = false;
+	keys.paused = false;
+
 
 	// Initializing day-night cycle randomnly and clock
 	srand(time(NULL));
@@ -534,8 +666,6 @@ Map:: Map(Player& avtr,int h = 15, int w = 60) : avatar(avtr), height(h), width(
 	
 	Point pos;
 	char type;
-
-
 
 	// Adding obstacles to the map    
 	for ( int i = 0; i < obst_num; i++ ) {
@@ -600,6 +730,19 @@ int Map::get_width() const { return width; }
 
 // bool Map::get_daynight() const { return day_night_cycle; }
 
+// Takes a position and examines wheather or not it's available, meaning there's not any kind of objects (trees, water), 
+// NPCs (werewolves, vampires) or the player's avatar in said position
+bool Map:: is_free(Point& pos) {
+
+	//Returns true if pos is free and false if it's occupied
+	if (   ( find_entity(pos) == NULL ) && ( find_object(pos) == NULL ) && ( pos.get_x() >= 0 ) 
+		&& ( pos.get_x() < width ) && ( pos.get_y() >= 0 ) && ( pos.get_y() < height)	)
+		return true;
+	else 
+		return false;    
+
+}
+
 // Returns a pointer to the entity that is in position pos
 // If it doesn't exist it returns NULL
 Entity* Map :: find_entity(Point& pos) {
@@ -619,6 +762,8 @@ Entity* Map :: find_entity(Point& pos) {
 	return NULL;
 }
 
+// Returns a pointer to the Werewolf that is in position pos
+// If it doesn't exist it returns NULL
 Werewolf* Map :: find_Werewolf(Point& pos) {
 
 	for ( int j = 0; j < werewolves.size(); j ++ ) {
@@ -629,6 +774,8 @@ Werewolf* Map :: find_Werewolf(Point& pos) {
 	return NULL;
 }
 
+// Returns a pointer to the Vampire that is in position pos
+// If it doesn't exist it returns NULL
 Vampire* Map :: find_Vampire(Point& pos) {
 
 	for ( int j = 0; j < vampires.size(); j ++ ) {
@@ -651,19 +798,6 @@ Object* Map:: find_object(Point& pos) {
 	return NULL;
 }
 
-// Takes a position and examines wheather or not it's available, meaning there's not any kind of objects (trees, water), 
-// NPCs (werewolves, vampires) or the player's avatar in said position
-bool Map:: is_free(Point& pos) {
-
-	//Returns true if pos is free and false if it's occupied
-	if (   ( find_entity(pos) == NULL ) && ( find_object(pos) == NULL ) && ( pos.get_x() >= 0 ) 
-		&& ( pos.get_x() < width ) && ( pos.get_y() >= 0 ) && ( pos.get_y() < height)	)
-		return true;
-	else 
-		return false;    
-
-}
-
 // Prints the map and it's contents
 void Map::print_map() {
 
@@ -677,93 +811,191 @@ void Map::print_map() {
 
     Point p;
 
+	// For each position on the Map, we examine wheather or not there is land, water, trees, a werewolf, a vampire 
+	// or the player's avatar on said position and we prind the corresponding symbol
     for ( int i = 0; i < height; i++ ) {
         
         for ( int j = 0; j < width; j++ ) {
-
+			
 			p.set_point(j,i);
 			
+			// Entity is Player
 			if((find_entity(p) != NULL) && (find_entity(p)->get_type() == 'P')) {
+
 				if(avatar.get_team() == 'W')
 					cout << "\033[42;31mW\033[0m";
 				else if(avatar.get_team() == 'V')	
 					cout << "\033[42;31mV\033[0m";
-			}	
+			}
+			// Entity is Vampire
 			else if((find_entity(p) != NULL) && (find_entity(p)->get_type() == 'V'))
 			 	cout << "\033[42;30m☀\033[0m";
+			// Entity is Werewolf
 			else if((find_entity(p) != NULL) && (find_entity(p)->get_type() == 'W'))
 				cout << "\033[42;37m☾\033[0m";
+			// Land
             else if(find_object(p) == NULL)
                 cout << "\033[42;32m \033[0m";
+			// Object is Potion
 			else if (find_object(p)->get_type() == 'P')
 				cout << "\033[42;31m♥\033[0m"; 
+			// Object is Water
             else if(find_object(p)->get_type() == 'W')
-                cout << "\033[44;32m░\033[0m";   
+                cout << "\033[44;32m░\033[0m";  
+			// Object is Tree 
             else
                 cout << "\033[42;33m♣\033[0m";
 
         }
         cout << endl;
     }
+	cout << "time: " << clock << endl;
 }
 
+void Map::update_keys(int input) {
+
+	// P or p (for pausing the game)
+	if ( (input == 80) || (input == 112) ) {
+
+		keys.KEY_P = true;
+
+		// If game isn't paused, pause it
+		if (keys.paused = false)
+			keys.paused = true;
+		// If game is paused, unpause it
+		else
+			keys.paused = false;
+		return;
+
+	}
+	// H or h (for pausing the game)
+	if ( (input == 72) || (input == 104) ) {
+		keys.KEY_H = true;
+		return;
+	}
+
+	// A or a
+	if ( (input == 65) || (input == 97) ) {
+		keys.KEY_LEFT = true;
+		return;
+	}
+	// D or d
+	else if ( (input == 68) || (input == 100) ) {
+		keys.KEY_RIGHT = true;
+		return;
+	}
+	// W or w
+	else if ( (input == 87) || (input == 119) ) {
+		keys.KEY_UP = true;
+		return;
+	}
+	else if ( (input == 83) || (input == 115) ) {
+		keys.KEY_DOWN = true;
+		return;
+	}
+
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//A temporary main function for tests
+// Initializing an updating the game
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Updates the game
+// Updates the game 
+// Returns true while the game is running and false when it's over
+bool Map::update_and_draw(Map& map) {
 
-void Map::update_and_draw(Map& map) {
+	// If one of the teams has lost we stop updating and return to main
+	if ( werewolves.empty() ) {
 
-	if ( werewolves.empty() ){
 		if (avatar.get_team() == 'W')
 			cout << "Team Werewolves was defeted! You lost loseraki:(\n";
 		else
 			cout << "Team Vampire came out Victorious! You won ;) \n";
+
 		cout << "Game Over! \n";
-		return;
+
+		return false;
 	}
-	else if ( vampires.empty() ){
+	else if ( vampires.empty() ) {
+
 		if (avatar.get_team() == 'V')
 			cout << "Team Vampires was defeted! You lost loseraki:(\n";
 		else
 			cout << "Team Werewolves came out Victorious! You won ;) \n";
+
 		cout << "Game Over! \n";
-		return; // tsekare 
+		
+		return false;
 	}
 
+	clock ++;
+	if (clock%10 == 0)
+		day_night_cycle = !day_night_cycle;
+	
+
+	// se kathe frame ta jana kanei false
+	keys.KEY_DOWN = false;
+	keys.KEY_UP = false;
+	keys.KEY_LEFT = false;
+	keys.KEY_RIGHT = false;
+	keys.KEY_H = false;
+	keys.KEY_P = false;
+	keys.paused = false;
+
+	int input = getchar();
+	if (input != EOF)
+		update_keys(input);
+
+	if (keys.paused)
+		return true;
+
+	if ( (keys.KEY_DOWN) || (keys.KEY_UP) || (keys.KEY_LEFT) || (keys.KEY_RIGHT) )
+		avatar.move(map);
+	// paizei na pethnoyn taytoxrona oloi apo tis omades oxi mallon alla des to ayrio
+
+	// Calling move function for all alive Werewolves
+	for(int i = 0; i < werewolves.size(); i++) {
+		werewolves.at(i).move(map);
+	}
+	// Calling move function for all alive Vampires
+	for(int i = 0; i < vampires.size(); i++) {
+		vampires.at(i).move(map);
+	}
+
+	// if (keys.KEY_H)
+	// 	avatar.heal(map);
+
+	// Afte moving, we call heal and attack_enemy functions for all alive Werewolves
 	for(int i = 0; i < werewolves.size(); i++) {
 
-		werewolves.at(i).move(map);
+		werewolves.at(i).heal(map);
+		werewolves.at(i).attack_enemy(map);
 			
 	}
-
-	for(int i = 0; i < vampires.size(); i++) {
-
-		vampires.at(i).move(map);
-			
-	}
-
-	// for(int i = 0; i < werewolves.size(); i++) {
-
-	// 	werewolves.at(i).heal_or_attack(map);
-			
-	// }
-
+	// Afte moving, we call heal and attack_enemy functions for all alive Vampires
 	for(int i = 0; i < vampires.size(); i++) {
 
 		vampires.at(i).heal(map);
 		vampires.at(i).attack_enemy(map);
 			
 	}
-
+	// We print the updated Map, as well as the number of alive membes of each team
 	print_map();
+	
+	// mporoume kai na mn to xoume gia na deixnei pote ftasei sto 0
+	// if (werewolves.size() > 0)
+		cout << "Werewolves alive: " << werewolves.at(0).get_count() << endl;
+	// if (vampires.size() > 0)
+		cout << "Vampires alive: " << vampires.at(0).get_count() << endl;
+
+	// Returning true means the game is still running
+	return true;
+	
 }
 
 // Initializing the game
-int main()
-{
+int main() {
+
 	// Asks user for Map size
 	int h,w;
 	cout << "Give Map size (height/width)\n";
@@ -780,18 +1012,17 @@ int main()
 
 	// Initializing the game Map
 	Map map(player,h,w);
-	// cout << "\033[2J\033[1;5H";
 
-	
+	// Calls the update function until a team looses
+	bool running;
+	do {
+		running = map.update_and_draw(map);
+		std::this_thread::sleep_for(500ms);
 
-	for (int i = 0; i < 10 ; i ++){
-		map.update_and_draw(map);
-		std::this_thread::sleep_for(2000ms);
+	} while (running);
 
-	}
-
-	cout << "check\n";
 
 	return 0;
+
 }
 
