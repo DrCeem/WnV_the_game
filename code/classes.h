@@ -212,3 +212,8 @@ class Werewolf : public Entity {
 		void bail(Map& map, Point& z);
 };
 
+// bool kbhit();
+// void enable_raw_mode();
+// void disable_raw_mode();
+
+

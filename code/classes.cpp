@@ -1,8 +1,10 @@
-
 #include "classes.h"
 #include <chrono>
 #include <thread>
 #include <cstdio>
+// #include <sys/ioctl.h> gia th malakia me tis synarthseis kbhit etc
+// #include <termios.h>
+// #include "curses.h"
 
 using namespace std::chrono_literals;
 
@@ -37,6 +39,7 @@ void Point::set_point(Point& p) {
 void Point::print_point() const { cout <<"("<< x << "," << y << ")" ; }
 
 bool operator==(Point const& p1, Point const& p2) {
+
 	if((p1.get_x() == p2.get_x()) && (p1.get_y() == p2.get_y()))
 		return true;
 	else
@@ -80,11 +83,12 @@ Player::~Player() {};
 char Player::get_team() const {return team;}
 
 // If it's the appropriate time of day for the player's team to be healed (day for vampires and night for werewolves)
-// the player heals their teammates, which decreases the number of potions the have by one 
+// the player heals their teammates, which decreases the number of potions they have by one 
 void Player::heal(Map& map) {
 	
 	if (number_of_healing_spells > 0) {
 
+		// 
 		if ( (team == 'W') && (!map.day_night_cycle) ) {
 
 			for(int i = 0; i < map.werewolves.size(); i++) {
@@ -120,6 +124,19 @@ void Player::move(Map& map) {
 
 		new_pos.set_x(pos.get_x() - 1);
 
+		if ( map.find_object(new_pos) != NULL ) {
+			// If the new position leads to the potion, the player takes it, increasing the amount of potions he owns by 1
+			Object* obj = map.find_object(new_pos);
+
+			if (obj->get_type() == 'P'){
+
+				number_of_healing_spells ++;
+				// Potion is the last object on vector objects 
+				map.objects.pop_back();
+				// Player moves to new position
+				pos.set_point(new_pos);
+			}
+		}
 		// If the position left of the current one is empty, player moves there
 		if ( map.is_free(new_pos) )
 			pos.set_point(new_pos);
@@ -130,8 +147,21 @@ void Player::move(Map& map) {
 
 		new_pos.set_x(pos.get_x() + 1);
 
+		if ( map.find_object(new_pos) != NULL ) {
+			// If the new position leads to the potion, the player takes it, increasing the amount of potions he owns by 1
+			Object* obj = map.find_object(new_pos);
+
+			if (obj->get_type() == 'P'){
+
+				number_of_healing_spells ++;
+				// Potion is the last object on vector objects 
+				map.objects.pop_back();
+				// Player moves to new position
+				pos.set_point(new_pos);
+			}
+		}
 		// If the position right of the current one is empty, player moves there
-		if ( map.is_free(new_pos) )
+		else if ( map.is_free(new_pos) )
 			pos.set_point(new_pos);
 		
 	}
@@ -141,7 +171,19 @@ void Player::move(Map& map) {
 		// new_pos.set_y(pos.get_y() + 1);
 		new_pos.set_y(pos.get_y() - 1);
 
+		if ( map.find_object(new_pos) != NULL ) {
+			// If the new position leads to the potion, the player takes it, increasing the amount of potions he owns by 1
+			Object* obj = map.find_object(new_pos);
 
+			if (obj->get_type() == 'P'){
+
+				number_of_healing_spells ++;
+				// Potion is the last object on vector objects 
+				map.objects.pop_back();
+				// Player moves to new position
+				pos.set_point(new_pos);
+			}
+		}
 		// If the position above the current one is empty, player moves there
 		if ( map.is_free(new_pos) )
 			pos.set_point(new_pos);
@@ -151,22 +193,26 @@ void Player::move(Map& map) {
 	else if (map.keys.KEY_DOWN) {
 		// den kserw gt doyleyei etsi alla 
 		new_pos.set_y(pos.get_y() + 1);
+		if ( map.find_object(new_pos) != NULL ) {
+			// If the new position leads to the potion, the player takes it, increasing the amount of potions he owns by 1
+			Object* obj = map.find_object(new_pos);
 
+			if( (obj->get_type() == 'P')){
+
+				number_of_healing_spells ++;
+				// Potion is the last object on vector objects 
+				map.objects.pop_back();
+				// Player moves to new position
+				pos.set_point(new_pos);
+			}
+		}
 		// If the position below the current one is empty, player moves there
 		if ( map.is_free(new_pos) )
 			pos.set_point(new_pos);
 		
 	}
 
-	// If the new position leads to the potion, the player takes it, increasing the amount of potions he owns by 1
-	// Object* obj = map.find_object(pos);
-	// if (obj->get_type() == 'P'){
-	// 	number_of_healing_spells ++;
-	// 	map.objects.erase(map.objects.begin() + ); +++++
-
-	// }
-	// return;
-	
+	return;
 	
 }
 
@@ -499,7 +545,6 @@ void Werewolf::move(Map& map) {
     position.set_y(position.get_y()-2);
     all_positions[4] = position;
 
-
     for (int i = 1; i < 5; i++) {
 
         // Store only the available positions in the second array and increase it's size
@@ -636,8 +681,6 @@ void Werewolf::bail(Map& map, Point& z)
 
 }
 
-
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Definition of Map
@@ -734,12 +777,13 @@ int Map::get_width() const { return width; }
 // NPCs (werewolves, vampires) or the player's avatar in said position
 bool Map:: is_free(Point& pos) {
 
-	//Returns true if pos is free and false if it's occupied
-	if (   ( find_entity(pos) == NULL ) && ( find_object(pos) == NULL ) && ( pos.get_x() >= 0 ) 
+	
+	// Returns true if pos is free and inside Map's limits and false if it's occupied or outside said limits
+	if ( ( find_entity(pos) == NULL ) && ( find_object(pos) == NULL ) && ( pos.get_x() >= 0 ) 
 		&& ( pos.get_x() < width ) && ( pos.get_y() >= 0 ) && ( pos.get_y() < height)	)
 		return true;
-	else 
-		return false;    
+	else   
+		return false;
 
 }
 
@@ -850,6 +894,29 @@ void Map::print_map() {
         cout << endl;
     }
 	cout << "time: " << clock << endl;
+
+	int sum_w =0;
+	int sum_v =0;
+
+	// Calling move function for all alive Werewolves
+	for(int i = 0; i < werewolves.size(); i++) {
+		sum_w += werewolves.at(i).get_health();
+	}
+	// Calling move function for all alive Vampires
+	for(int i = 0; i < vampires.size(); i++) {
+		sum_v += vampires.at(i).get_health();
+	}
+	
+	// mporoume kai na mn to xoume gia na deixnei pote ftasei sto 0
+	if (werewolves.size() > 0) {
+		cout << "Werewolves alive: " << werewolves.at(0).get_count() << endl;
+		cout << "Werewolves' average health: " << sum_w/werewolves.size() << endl;
+	}
+	if (vampires.size() > 0) {
+		cout << "Vampires alive: " << vampires.at(0).get_count() << endl;
+		cout << "Vampires' average health: " << sum_v/vampires.size()<< endl;
+	}
+
 }
 
 void Map::update_keys(int input) {
@@ -929,6 +996,7 @@ bool Map::update_and_draw(Map& map) {
 	}
 
 	clock ++;
+	
 	if (clock%10 == 0)
 		day_night_cycle = !day_night_cycle;
 	
@@ -940,10 +1008,21 @@ bool Map::update_and_draw(Map& map) {
 	keys.KEY_RIGHT = false;
 	keys.KEY_H = false;
 	keys.KEY_P = false;
-	keys.paused = false;
+	// keys.paused = false; ayto menei idio
+
+	// αυτο θεωργητικα δουλεευι αλλα πετα ερρορ στο τελος
+	// enable_raw_mode();
+
+	// if ( kbhit() ){
+	// 	int input = getchar();
+	// 	update_keys(input);
+
+	// }
+	// disable_raw_mode();
 
 	int input = getchar();
-	if (input != EOF)
+
+	if (input!= EOF)
 		update_keys(input);
 
 	if (keys.paused)
@@ -952,7 +1031,7 @@ bool Map::update_and_draw(Map& map) {
 	if ( (keys.KEY_DOWN) || (keys.KEY_UP) || (keys.KEY_LEFT) || (keys.KEY_RIGHT) )
 		avatar.move(map);
 	// paizei na pethnoyn taytoxrona oloi apo tis omades oxi mallon alla des to ayrio
-
+	
 	// Calling move function for all alive Werewolves
 	for(int i = 0; i < werewolves.size(); i++) {
 		werewolves.at(i).move(map);
@@ -962,8 +1041,8 @@ bool Map::update_and_draw(Map& map) {
 		vampires.at(i).move(map);
 	}
 
-	// if (keys.KEY_H)
-	// 	avatar.heal(map);
+	if (keys.KEY_H)
+		avatar.heal(map);
 
 	// Afte moving, we call heal and attack_enemy functions for all alive Werewolves
 	for(int i = 0; i < werewolves.size(); i++) {
@@ -979,32 +1058,57 @@ bool Map::update_and_draw(Map& map) {
 		vampires.at(i).attack_enemy(map);
 			
 	}
+
 	// We print the updated Map, as well as the number of alive membes of each team
 	print_map();
-	
-	// mporoume kai na mn to xoume gia na deixnei pote ftasei sto 0
-	// if (werewolves.size() > 0)
-		cout << "Werewolves alive: " << werewolves.at(0).get_count() << endl;
-	// if (vampires.size() > 0)
-		cout << "Vampires alive: " << vampires.at(0).get_count() << endl;
 
 	// Returning true means the game is still running
 	return true;
 	
 }
 
+// void enable_raw_mode()
+// {
+//     termios term;
+//     tcgetattr(0, &term);
+//     term.c_lflag &= ~(ICANON | ECHO); // Disable echo as well
+//     tcsetattr(0, TCSANOW, &term);
+// }
+
+// void disable_raw_mode()
+// {
+//     termios term;
+//     tcgetattr(0, &term);
+//     term.c_lflag |= ICANON | ECHO;
+//     tcsetattr(0, TCSANOW, &term);
+// }
+
+// bool kbhit()
+// {
+//     int byteswaiting;
+//     ioctl(0, FIONREAD, &byteswaiting);
+//     return byteswaiting > 0;
+// }
+
 // Initializing the game
 int main() {
 
 	// Asks user for Map size
 	int h,w;
-	cout << "Give Map size (height/width)\n";
-	cin >> h >> w;
+	do {
+		cout << "Give Map size (height/width)\n";
+		cin >> h >> w;
+
+	// Smallest possible sizes for Map are 5x10 and 10x5
+	} while( ( (h<5) || (w<10) ) && ( (h<10) || (w<5) ) );
 
 	// Asks user for their team
 	char team;
-	cout <<"Give Player's team ('W' for werewolves and 'V for vampires\n";
-	cin >> team;
+	do {
+		cout <<"Give Player's team ('W' for werewolves and 'V for vampires\n";
+		cin >> team;
+
+	} while ( (team != 'W') and (team != 'V') );
 
 	// Initializing player's position randomly
 	Point p(rand()% w, rand()% h);
