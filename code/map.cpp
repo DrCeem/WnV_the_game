@@ -5,17 +5,6 @@
 
 Map:: Map(Player& avtr,int h = 15, int w = 60) : avatar(avtr), height(h), width(w) {   
 
-	// Initializing keys 
-	// theoritika den xeiazetai
-	keys.KEY_DOWN = false;
-	keys.KEY_UP = false;
-	keys.KEY_LEFT = false;
-	keys.KEY_RIGHT = false;
-	keys.KEY_H = false;
-	keys.KEY_P = false;
-	keys.paused = false;
-
-
 	// Initializing day-night cycle randomnly and clock
 	srand(time(NULL));
 	day_night_cycle = rand() % 2;
@@ -164,7 +153,8 @@ Object* Map:: find_object(Point& pos) {
 void Map::print_map() {
 
 	// Resets the cursor at the beginning of Terminal
-	cout << "\033[2J\033[1;5H";
+	cout << "\033[2J\033[1;5H" << endl;
+
 
 	if (day_night_cycle)
         cout<<"DAY ☀\n";
@@ -224,60 +214,10 @@ void Map::print_map() {
 	for(int i = 0; i < vampires.size(); i++) {
 		sum_v += vampires.at(i).get_health();
 	}
-	
-	// mporoume kai na mn to xoume gia na deixnei pote ftasei sto 0
-	if (werewolves.size() > 0) {
-		cout << "Werewolves alive: " << werewolves.at(0).get_count() << endl;
-		cout << "Werewolves' average health: " << sum_w/werewolves.size() << endl;
-	}
-	if (vampires.size() > 0) {
-		cout << "Vampires alive: " << vampires.at(0).get_count() << endl;
-		cout << "Vampires' average health: " << sum_v/vampires.size()<< endl;
-	}
 
-}
+	cout << "Werewolves' average health: " << sum_w/werewolves.size() << endl;
+	cout << "Vampires' average health: " << sum_v/vampires.size()<< endl;
 
-void Map::update_keys(int input) {
-
-	// P or p (for pausing the game)
-	if ( (input == 80) || (input == 112) ) {
-
-		keys.KEY_P = true;
-
-		// If game isn't paused, pause it
-		if (keys.paused = false)
-			keys.paused = true;
-		// If game is paused, unpause it
-		else
-			keys.paused = false;
-		return;
-
-	}
-	// H or h (for healing the memebers of the player's team)
-	if ( (input == 72) || (input == 104) ) {
-		keys.KEY_H = true;
-		return;
-	}
-
-	// A or a
-	if ( (input == 65) || (input == 97) ) {
-		keys.KEY_LEFT = true;
-		return;
-	}
-	// D or d
-	else if ( (input == 68) || (input == 100) ) {
-		keys.KEY_RIGHT = true;
-		return;
-	}
-	// W or w
-	else if ( (input == 87) || (input == 119) ) {
-		keys.KEY_UP = true;
-		return;
-	}
-	else if ( (input == 83) || (input == 115) ) {
-		keys.KEY_DOWN = true;
-		return;
-	}
 
 }
 
@@ -287,31 +227,7 @@ void Map::update_keys(int input) {
 
 // Updates the game 
 // Returns true while the game is running and false when it's over
-bool Map::update_and_draw(Map& map) {
-
-	// If one of the teams has lost we stop updating and return to main
-	if ( werewolves.empty() ) {
-
-		if (avatar.get_team() == 'W')
-			cout << "Team Werewolves was defeted! You lost loseraki:(\n";
-		else
-			cout << "Team Vampire came out Victorious! You won ;) \n";
-
-		cout << "Game Over! \n";
-
-		return false;
-	}
-	else if ( vampires.empty() ) {
-
-		if (avatar.get_team() == 'V')
-			cout << "Team Vampires was defeted! You lost loseraki:(\n";
-		else
-			cout << "Team Werewolves came out Victorious! You won ;) \n";
-
-		cout << "Game Over! \n";
-		
-		return false;
-	}
+void Map::update_and_draw(Map& map, KeyState& keys) {
 
 	clock ++;
 	
@@ -319,35 +235,8 @@ bool Map::update_and_draw(Map& map) {
 		day_night_cycle = !day_night_cycle;
 	
 
-	// se kathe frame ta jana kanei false
-	keys.KEY_DOWN = false;
-	keys.KEY_UP = false;
-	keys.KEY_LEFT = false;
-	keys.KEY_RIGHT = false;
-	keys.KEY_H = false;
-	keys.KEY_P = false;
-	// keys.paused = false; ayto menei idio
-
-	// αυτο θεωργητικα δουλεευι αλλα πετα ερρορ στο τελος
-	// enable_raw_mode();
-
-	// if ( kbhit() ){
-	// 	int input = getchar();
-	// 	update_keys(input);
-
-	// }
-	// disable_raw_mode();
-
-	int input = getchar();
-
-	if (input!= EOF)
-		update_keys(input);
-
-	if (keys.paused)
-		return true;
-
-	if ( (keys.KEY_DOWN) || (keys.KEY_UP) || (keys.KEY_LEFT) || (keys.KEY_RIGHT) )
-		avatar.move(map);
+	if ( (keys.DOWN) || (keys.UP) || (keys.LEFT) || (keys.RIGHT) )
+		avatar.move(map,keys);
 	// paizei na pethnoyn taytoxrona oloi apo tis omades oxi mallon alla des to ayrio
 	
 	// Calling move function for all alive Werewolves
@@ -359,7 +248,7 @@ bool Map::update_and_draw(Map& map) {
 		vampires.at(i).move(map);
 	}
 
-	if (keys.KEY_H)
+	if (keys.H)
 		avatar.heal(map);
 
 	// Afte moving, we call heal and attack_enemy functions for all alive Werewolves
@@ -380,7 +269,5 @@ bool Map::update_and_draw(Map& map) {
 	// We print the updated Map, as well as the number of alive membes of each team
 	print_map();
 
-	// Returning true means the game is still running
-	return true;
 	
 }

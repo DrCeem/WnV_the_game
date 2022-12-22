@@ -57,12 +57,12 @@ void Player::heal(Map& map) {
 
 } 
 
-void Player::move(Map& map) {
+void Player::move(Map& map, KeyState& keys) {
 	
 	Point new_pos( pos.get_x(),pos.get_y() );
 
 	// A or a
-	if (map.keys.KEY_LEFT) {
+	if (keys.LEFT) {
 
 		new_pos.set_x(pos.get_x() - 1);
 
@@ -85,7 +85,7 @@ void Player::move(Map& map) {
 		
 	}
 	// D or d
-	else if (map.keys.KEY_RIGHT) {
+	else if (keys.RIGHT) {
 
 		new_pos.set_x(pos.get_x() + 1);
 
@@ -108,7 +108,7 @@ void Player::move(Map& map) {
 		
 	}
 	// W or w
-	else if (map.keys.KEY_UP) {
+	else if (keys.UP) {
 
 		// new_pos.set_y(pos.get_y() + 1);
 		new_pos.set_y(pos.get_y() - 1);
@@ -132,7 +132,7 @@ void Player::move(Map& map) {
 		
 	}
 	// S or s
-	else if (map.keys.KEY_DOWN) {
+	else if (keys.DOWN) {
 		// den kserw gt doyleyei etsi alla 
 		new_pos.set_y(pos.get_y() + 1);
 		if ( map.find_object(new_pos) != NULL ) {

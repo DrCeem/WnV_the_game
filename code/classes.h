@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <vector>
 
-#define MAX_HEALTH 10
+#define MAX_HEALTH 10 
 
 using namespace std;
 
@@ -13,25 +13,26 @@ using namespace std;
 
 class Point;
 class Entity;
-class Entity;
 class Player;
 class Vampire;
 class Werewolf;
 class Object;
 class Map;
+class GameState;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Declaration of a struct that represents which keys are pressed
 
 struct KeyState {
-	bool KEY_UP;
-	bool KEY_DOWN;
-	bool KEY_LEFT;
-	bool KEY_RIGHT;
-	bool KEY_H;
-	bool KEY_P;
-	bool paused;
+
+	bool UP;
+	bool DOWN;
+	bool LEFT;
+	bool RIGHT;
+	bool H;
+	bool P;
+
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,7 +83,7 @@ class Entity {
 
 	protected: 
 		Point pos;
-		 char type;	// Either 'P' for Player, 'W' for Werewolf or 'V' for Vampire
+		char type;	// Either 'P' for Player, 'W' for Werewolf or 'V' for Vampire
 
 	public:
 
@@ -90,8 +91,7 @@ class Entity {
 		~Entity();
 		Point get_pos() const;
 		char get_type() const;
-		// void move() ;
-		// void heal() ;
+
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -108,7 +108,7 @@ class Player : public Entity {
 		Player(Point& p, char tp, char tm);
 		~Player();
 		char get_team() const;
-		void move(Map& map);
+		void move(Map& map, KeyState& keys);
 		void heal(Map& map);
 };
 
@@ -122,7 +122,6 @@ class Map {
 	const int width;
 	bool day_night_cycle; 	// True if it's daytime, false if it's nighttime
 	int clock;
-	KeyState keys;
 	vector <Object> objects;
 	vector <Vampire> vampires;
 	vector <Werewolf> werewolves;
@@ -131,6 +130,7 @@ class Map {
     friend class Player;
 	friend class Vampire;
 	friend class Werewolf;
+	friend class GameState;
 	
 	public:
 
@@ -138,11 +138,9 @@ class Map {
 		~Map() {};
 		int get_height() const;
 		int get_width() const;
-        // bool get_daynight() const;
 		bool is_free(Point& x);
 		void print_map();
-		void update_keys(int input);
-        bool update_and_draw(Map& map);
+        void update_and_draw(Map& map, KeyState& keys);
 		Object* find_object(Point& pos);
 		Entity* find_entity(Point& pos);
 		Vampire* find_Vampire(Point& pos);
@@ -212,8 +210,27 @@ class Werewolf : public Entity {
 		void bail(Map& map, Point& z);
 };
 
-// bool kbhit();
-// void enable_raw_mode();
-// void disable_raw_mode();
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Declaration of GameState
+
+class GameState {
+
+	KeyState keys;
+	bool playing;
+	bool paused;
+	Map map;
+
+	public:
+
+		GameState(Map& m);
+		~GameState();
+		bool is_playing() const;
+		bool is_paused() const;
+		void update_keys();
+		void update();
+
+
+};
 
 

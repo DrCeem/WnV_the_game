@@ -2,34 +2,8 @@
 #include <chrono>
 #include <thread>
 #include <cstdio>
-// #include <sys/ioctl.h> gia th malakia me tis synarthseis kbhit etc
-// #include <termios.h>
-// #include "curses.h"
 
 using namespace std::chrono_literals;
-
-// void enable_raw_mode()
-// {
-//     termios term;
-//     tcgetattr(0, &term);
-//     term.c_lflag &= ~(ICANON | ECHO); // Disable echo as well
-//     tcsetattr(0, TCSANOW, &term);
-// }
-
-// void disable_raw_mode()
-// {
-//     termios term;
-//     tcgetattr(0, &term);
-//     term.c_lflag |= ICANON | ECHO;
-//     tcsetattr(0, TCSANOW, &term);
-// }
-
-// bool kbhit()
-// {
-//     int byteswaiting;
-//     ioctl(0, FIONREAD, &byteswaiting);
-//     return byteswaiting > 0;
-// }
 
 // Initializing the game
 int main() {
@@ -58,14 +32,15 @@ int main() {
 	// Initializing the game Map
 	Map map(player,h,w);
 
-	// Calls the update function until a team looses
-	bool running;
+	GameState state(map);
+
+	// Calls the update function until a team looses (Game Over)
 	do {
-		running = map.update_and_draw(map);
-		std::this_thread::sleep_for(500ms);
 
-	} while (running);
+		state.update();
+		std::this_thread::sleep_for(600ms);
 
+	} while ( state.is_playing() );
 
 	return 0;
 
