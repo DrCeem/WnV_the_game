@@ -1,12 +1,13 @@
+
 #include "classes.h"
-#include <stdio.h>
-#include <unistd.h>
+#include <cstdio>
 #include <fcntl.h>
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Definition of GameState
 
-GameState::GameState(Map& m) : map(m) {
+GameState:: GameState(Map& m) : map(m) {
 
     // Initializing keys
     keys.DOWN = false;
@@ -16,18 +17,19 @@ GameState::GameState(Map& m) : map(m) {
 	keys.H = false;
 	keys.P = false;
 
-    // Initializing state of game (playing, paused, game over) ++
+    // Initializing state of game 
     playing = true;
 	paused = false;
+	
 }
 
-GameState::~GameState() {}
+GameState:: ~GameState() {}
 
-bool GameState::is_playing() const { return playing; }
+bool GameState:: is_playing() const { return playing; }
 
-bool GameState::is_paused() const { return paused; }
+bool GameState:: is_paused() const { return paused; }
 
-void GameState::update_keys() {
+void GameState:: update_keys() {
 
     // Starts by setting all keys's values to false, and then changes them according to user's input
     keys.DOWN = false;
@@ -39,26 +41,23 @@ void GameState::update_keys() {
 
 	char input;
 
+	// Make scanf() non-blocking
     fcntl(0, F_SETFL, fcntl(0, F_GETFL) | O_NONBLOCK);
 
 	while (1) {
 		
         int ret = scanf("%c", &input);
 		
+		// If there's input we check what key the user pressed
         if (ret > 0){
 
-
-    // scanf("%c", &input);
-       
-    // int input = getchar();
-
-    // P or p (for pausing the game)
+		// P or p (for pausing the game)
 		if ( (input == 'P') || (input == 'p') ) {
 			keys.P = true;
 			return;
 		}
 	
-		// H or h (for healing the memebers of the player's team)
+		// H or h (for healing the members of the player's team)
 		if ( (input == 'H') || (input == 'h') ) {
 			keys.H = true;
 			return;
@@ -69,49 +68,57 @@ void GameState::update_keys() {
 			return;
 		}
 		// D or d
-		else if ( (input == 'D') || (input == 'd') ) {
+		if ( (input == 'D') || (input == 'd') ) {
 			keys.RIGHT = true;
 			return;
 		}
 		// W or w
-		else if ( (input == 'W') || (input == 'w') ) {
+		if ( (input == 'W') || (input == 'w') ) {
 			keys.UP = true;
 			return;
 		}
 		//  S or s
-		else if ( (input == 'S') || (input == 's') ) {
+		if ( (input == 'S') || (input == 's') ) {
 			keys.DOWN = true;
 			return;
 		}
 	}
+	// If none of the keys above got pressed we return
 	else
 		return;
 	}
 
 }
 
-void GameState::update() {
+void GameState:: update() {
 
 	// If one of the teams has lost we stop updating and return to main
     if (map.werewolves.empty() ) {
+
+		// Resets the cursor at the beginning of Terminal
+		cout << "\033[2J\033[1;5H" << endl;
 
 		if (map.avatar.get_team() == 'W')
 			cout << "Team Werewolves was defeted! You lost :(\n";
 		else
 			cout << "Team Vampire came out Victorious! You won ;) \n";
-
+		
 		cout << "Game Over! \n";
 
 		playing = false;
 		return;
+
 	}
 	else if ( map.vampires.empty() ) {
+
+		// Resets the cursor at the beginning of Terminal
+		cout << "\033[2J\033[1;5H" << endl;
 
 		if (map.avatar.get_team() == 'V')
 			cout << "Team Vampires was defeted! You lost :(\n";
 		else
 			cout << "Team Werewolves came out Victorious! You won ;) \n";
-
+		
 		cout << "Game Over! \n";
 
 		playing = false;
@@ -125,33 +132,20 @@ void GameState::update() {
 	if (keys.P)
 		paused = !paused;
 
+	// If the game isn't paused, update and draw the map
 	if (!paused) {
 		map.update_and_draw(map,keys);
 	}
+	// Otherwise we print the number of alive werewolves and vampires as well as the amount of potions the player has
 	else {
 		// Resets the cursor at the beginning of Terminal
 		cout << "\033[2J\033[1;5H" << endl;
 		cout << "The Game is paused\n";
-		cout << "Werewolves alive: " << map.werewolves.at(0).get_count() << endl;
-		cout << "Vampires alive: " << map.vampires.at(0).get_count() << endl;
+		cout << "Werewolves alive: " << map.werewolves.size() << endl;
+		cout << "Vampires alive: " << map.vampires.size() << endl;
+		cout << "You have " << map.avatar.get_potions() << " potion(s)\n";
 	}
-	
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

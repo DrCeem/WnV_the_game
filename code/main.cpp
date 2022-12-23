@@ -1,3 +1,4 @@
+
 #include "classes.h"
 #include <chrono>
 #include <thread>
@@ -23,7 +24,7 @@ int main() {
 		cout <<"Give Player's team ('W' for werewolves and 'V for vampires\n";
 		cin >> team;
 
-	} while ( (team != 'W') and (team != 'V') );
+	} while ( (team != 'W') && (team != 'V') );
 
 	// Initializing player's position randomly
 	Point p(rand()% w, rand()% h);
@@ -32,11 +33,11 @@ int main() {
 	// Initializing the game Map
 	Map map(player,h,w);
 
+	// Initializing the Game State
 	GameState state(map);
 
 	// Calls the update function until a team looses (Game Over)
 	do {
-
 		state.update();
 		std::this_thread::sleep_for(600ms);
 

@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <vector>
 
-#define MAX_HEALTH 10 
+#define MAX_HEALTH 5
 
 using namespace std;
 
@@ -37,7 +37,7 @@ struct KeyState {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Declaration of 2D Point in Euclidean space
+// Declaration of a 2D Point in Euclidean space
 
 class Point {
 
@@ -46,21 +46,23 @@ class Point {
 
 	public:
 
-		Point(int a = 0, int b = 0);
-		~Point();
-		friend bool operator==(Point const& p1, Point const& p2);
+		Point(int a = 0, int b = 0); 	// Constructor
+		~Point();						// Destructor
+
+		friend bool operator==(Point const& p1, Point const& p2); // Overloaded operator
 		void set_x(int a);
-		int get_x() const; 
+		int get_x() const; 				// Accessors
 		void set_y(int b);
 		int get_y() const;
 		void set_point(int x, int y);
 		void set_point(Point& p);
-		void print_point() const;
+		void print_point() const;		// Print Function
+
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Decleration of Object
+// Declaration of Object
 
 class Object {
 
@@ -69,47 +71,54 @@ class Object {
 
 	public:
 
-		Object(Point& p, char t);
-		~Object();
-		Point get_pos() const;
+		Object(Point& p, char t);		// Constructor
+		~Object();						// Destructor
+
+		Point get_pos() const;			// Accessors
 		char get_type() const;
+
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//Decleration of Entity 
+//Declaration of Entity 
 
 class Entity {
 
 	protected: 
+
 		Point pos;
 		char type;	// Either 'P' for Player, 'W' for Werewolf or 'V' for Vampire
 
 	public:
 
-		Entity(Point& p, char t);
-		~Entity();
-		Point get_pos() const;
+		Entity(Point& p, char t);		// Constructor
+		~Entity();						// Destructor
+
+		Point get_pos() const;			// Accessors
 		char get_type() const;
 
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//Decleration of Player
+// Declaration of Player
 
 class Player : public Entity {
 
-	const char team;	// Either 'W' for Werewolves or 'V' for Vampires, depending on which team the playe chooses
+	const char team;	// Either 'W' for Werewolves or 'V' for Vampires, depending on which team the player chooses
 	int number_of_healing_spells;
 
 	public:
 
-		Player(Point& p, char tp, char tm);
-		~Player();
-		char get_team() const;
-		void move(Map& map, KeyState& keys);
-		void heal(Map& map);
+		Player(Point& p, char tp, char tm);		// Constructor
+		~Player();								// Destructor
+
+		char get_team() const;					// Accessors
+		int get_potions() const;
+		void move(Map& map, KeyState& keys);	// Player move ability
+		void heal(Map& map);					// Player heal ability
+
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -134,17 +143,18 @@ class Map {
 	
 	public:
 
-		Map(Player& avtr, int h, int w);
-		~Map() {};
-		int get_height() const;
+		Map(Player& avtr, int h, int w); 	// Constructor
+		~Map();								// Destructor
+
+		int get_height() const;				// Accessors
 		int get_width() const;
 		bool is_free(Point& x);
-		void print_map();
-        void update_and_draw(Map& map, KeyState& keys);
-		Object* find_object(Point& pos);
-		Entity* find_entity(Point& pos);
-		Vampire* find_Vampire(Point& pos);
-		Werewolf* find_Werewolf(Point& pos);
+		void print_map();					// Prints Map
+        void update_and_draw(Map& map, KeyState& keys); 	// Updates map and calls print_map
+		Object* find_object(Point& pos);			// Returns pointer to object if not found returns NULL
+		Entity* find_entity(Point& pos);			// Returns pointer to entity if not found returns NULL
+		Vampire* find_Vampire(Point& pos);			// Returns pointer to vampire if not found returns NULL
+		Werewolf* find_Werewolf(Point& pos);		// Returns pointer to werewolf if not found returns NULL
 		
 };
 
@@ -154,7 +164,6 @@ class Map {
 
 class Vampire : public Entity {
 	
-	static int count;
 	int health;
 	int attack;
 	int defence;
@@ -162,30 +171,29 @@ class Vampire : public Entity {
 
 	public:
 
-		Vampire(Point& p, char tp);
-		~Vampire();
-		int get_count() const;	
-		void set_count(int c);	
-		char get_type() const;
+		Vampire(Point& p, char tp);			// Constuctor
+		~Vampire();							// Destructor
+
+		char get_type() const;				// Accessors
 		int get_health() const;
 		int get_attack() const;
 		int get_defence() const;
 		int get_potions() const;
 		void set_health(int h);
 		void set_potions(int p);
-		void move(Map& map);
-		void heal(Map& map);
-		void attack_enemy(Map& map);
-		void bail(Map& map,Point& z);
+		void move(Map& map);				// Vampire's move ability
+		void heal(Map& map);				// Vampire's heal ability
+		void attack_enemy(Map& map);		// Vampire's attack ability
+		void bail(Map& map,Point& z);		// Vampire's bail ability
+
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//Declaration of Werewolf
+// Declaration of Werewolf
 
 class Werewolf : public Entity {
 	
-	static int count;
 	int health;
 	int attack;
 	int defence;
@@ -193,21 +201,21 @@ class Werewolf : public Entity {
 
 	public:
 
-		Werewolf(Point& p,char tp);
-		~Werewolf();
-		int get_count() const;
-		void set_count(int c);	
-		char get_type() const;
+		Werewolf(Point& p,char tp);			// Constuctor
+		~Werewolf();						// Destructor
+
+		char get_type() const;				// Accessors
 		int get_health() const;
 		int get_attack() const;
 		int get_defence() const;
 		int get_potions() const;
 		void set_health(int h);
 		void set_potions(int p);
-		void move(Map& map) ;
-		void heal(Map& map);
-		void attack_enemy(Map& map);
-		void bail(Map& map, Point& z);
+		void move(Map& map) ;				// Werewolf's move ability
+		void heal(Map& map);				// Werewolf's heal ability
+		void attack_enemy(Map& map);		// Werewolf's attack ability
+		void bail(Map& map, Point& z);		// Werewolf's bail ability
+
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -223,14 +231,13 @@ class GameState {
 
 	public:
 
-		GameState(Map& m);
-		~GameState();
-		bool is_playing() const;
+		GameState(Map& m);			// Constuctor
+		~GameState();				// Destructor
+		bool is_playing() const;	// Accessors
 		bool is_paused() const;
-		void update_keys();
-		void update();
-
+		void update_keys();			// Updates the keys
+		void update();				// Updates the game
 
 };
 
-
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
