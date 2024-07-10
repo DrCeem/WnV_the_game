@@ -1,3 +1,7 @@
+Ομαδική εργασία στο μάθημα Αντικειμενοστραφής Προγραμματισμός της σχολής Πληροφορικής και Τηλεπικοινωνιών του Εθνικού και Καποδιστριακού Πανεπιστημίου Αθηνών.
+
+Συνεργάτης: https://github.com/DrCeem
+
 Περιγραφή του κώδικα: 
 
     Οι κλάσεις που χρησιμοποιούνται είναι οι εξής : Point , Object, Entity(base class), Player(derived από την Entity), Vampire (derived από την Entity), Werewolf(derived από την Entity), Map και GameState. 
